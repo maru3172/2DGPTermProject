@@ -1,7 +1,7 @@
 # 2DGPTermProject
 2D Game Programming Term Project 2021180023
 
-게임의 간단한 소개 (카피의 경우 원작에 대한 언급)
+게임의 간단한 소개
 
 
 예상 게임 실행 흐름
