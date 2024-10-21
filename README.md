@@ -2,8 +2,9 @@
 2D Game Programming Term Project 2021180023
 
 게임의 간단한 소개
-
-https://github.com/user-attachments/assets/78cc9f41-f91b-4633-91ff-480085041206
+<p align="left">
+<img width="70%" alt="스크린샷 2-24-10-21" src="https://github.com/user-attachments/assets/78cc9f41-f91b-4633-91ff-480085041206">
+</p>
 
 -------------------------------------------------------------------------------------
 
