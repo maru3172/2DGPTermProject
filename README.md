@@ -60,3 +60,8 @@ Scene 의 종류 및 구성, 전환 규칙
 배경 화면 이동 적용
 
 기능 테스트, 마지막 유지보수 및 보완
+
+-------------------------------------------------------------------------------------
+출처
+
+https://www.taptap.io/kr/app/33601228 - TapTap, 1942 Air Force Classic Fighter Game Play ScreenShot
