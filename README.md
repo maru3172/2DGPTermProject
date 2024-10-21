@@ -2,6 +2,12 @@
 2D Game Programming Term Project 2021180023
 
 게임의 간단한 소개
+
+플레이어 기체를 조종하며 몰려오는 적들의 공격으로부터 최대한 생존하는 게임
+
+
+플레이 예시 스크린샷
+
 <p align="left">
 <img width="70%" alt="스크린샷 2-24-10-21" src="https://github.com/user-attachments/assets/78cc9f41-f91b-4633-91ff-480085041206">
 </p>
