@@ -19,7 +19,7 @@
 타이틀 화면 -> 게임 플레이 -> 플레이어 사망 -> 게임 종료 화면 -> 게임 종료
 
 <p align="left">
-<img width="70%" alt="스크린샷 2-24-10-21" src="[https://github.com/user-attachments/assets/78cc9f41-f91b-4633-91ff-480085041206](https://github.com/user-attachments/assets/33c19682-d72d-481b-82d8-5fe675d272aa)">
+<img width="70%" alt="스크린샷 2-24-10-21" src="https://github.com/user-attachments/assets/33c19682-d72d-481b-82d8-5fe675d272aa">
 </p>
 
 -------------------------------------------------------------------------------------
