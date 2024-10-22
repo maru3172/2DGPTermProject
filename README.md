@@ -41,9 +41,9 @@ Scene 의 종류 및 구성, 전환 규칙
 
 각 Scene 에 등장하는 GameObject 의 종류 및 구성, 상호작용
 
-class Player - 플레이어의 이동 및 조작, 플레이어의 이동 Scene, 플레이어의 충돌 제어
+class Player - 플레이어의 이동 및 조작, 플레이어의 이동 Scene, 플레이어의 충돌판정 제어
 
-class Enermy - 적의 이동 및 공격, 적의 이동 Scene 제어
+class Enermy - 적의 이동 및 공격, 적의 이동 Scene, 적의 충돌판정 제어
 
 class Bullet - 적 혹은 아군이 쏜 탄 제어
 
