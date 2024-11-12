@@ -1,0 +1,179 @@
+from pico2d import *
+import random
+import gfw
+
+def clamp(min_value, value, max_value):
+    return max(min_value, min(value, max_value))
+
+class Enemy(gfw.AnimSprite):
+    WIDTH = 100
+    MAX_LEVEL = 20
+    gauge = None
+
+    def __init__(self, x, y, level):
+        self.x = x
+        self.y = y
+        self.level = level
+        super().__init__(f'res/enemy_{level:02d}.png', x, y, 10)
+        self.speed = -100  # 100 pixels per second
+        self.max_life = level * 100
+        self.life = self.max_life
+        self.score = self.max_life
+        if Enemy.gauge is None:
+            Enemy.gauge = gfw.Gauge('res/gauge_fg.png', 'res/gauge_bg.png')
+        self.layer_index = gfw.top().world.layer.enemy
+        self.shoot_time = 0  # 발사 시간을 추적하기 위한 변수
+        self.shoot_interval = 1.0  # 탄 발사 간격 (초)
+
+        self.move_amplitude = 20  # 좌우 진동 범위 (작게 설정)
+        self.move_frequency = 0.2  # 좌우 진동 속도 (느리게 설정)
+        self.move_time = 0  # 진동 시간을 추적하기 위한 변수
+
+        # 초기 상태 변수들
+        self.is_moving_sideways = False  # 처음에는 좌우로 이동하지 않음
+        self.sideway_duration = 2.0  # 좌우로 이동하는 시간 (초)
+        self.sideway_timer = 0  # 좌우 이동 타이머
+        self.idle_time = 3.0  # 아래로만 내려오는 시간 (초)
+        self.idle_timer = 0  # 아래로만 내려오는 타이머
+        self.move_direction = random.choice(['left', 'right'])  # 좌우 이동 방향 (초기 랜덤)
+
+    def update(self):
+        # 화면 크기 가져오기
+        screen_width = gfw.top().screen_width  # 게임 화면의 가로 길이
+        screen_height = gfw.top().screen_height  # 게임 화면의 세로 길이
+
+        # 적의 이동 (y축) -> 기본적으로 아래로만 내려옴
+        self.y += self.speed * gfw.frame_time
+
+        if self.is_moving_sideways:
+            # 좌우로 이동하는 상태
+            self.sideway_timer += gfw.frame_time
+            if self.move_direction == 'left':
+                self.x -= self.move_amplitude * math.sin(self.move_frequency * self.move_time)
+            elif self.move_direction == 'right':
+                self.x += self.move_amplitude * math.sin(self.move_frequency * self.move_time)
+
+            # 일정 시간 뒤, 다시 아래로만 내려옴
+            if self.sideway_timer >= self.sideway_duration:
+                self.is_moving_sideways = False
+                self.sideway_timer = 0
+                self.move_time = 0  # 진동 초기화
+        else:
+            # 아래로만 내려오는 상태
+            self.idle_timer += gfw.frame_time
+            if self.idle_timer >= self.idle_time:
+                # 일정 시간 후에 좌우 이동을 시작
+                self.is_moving_sideways = True
+                self.move_direction = random.choice(['left', 'right'])  # 좌우 방향 랜덤 설정
+                self.idle_timer = 0  # 타이머 초기화
+
+        # 화면 밖으로 나가지 않도록 제한
+        left_bound = 0  # 화면 왼쪽 경계
+        right_bound = screen_width - self.WIDTH  # 화면 오른쪽 경계
+
+        # 적의 x좌표가 화면 바깥으로 나가지 않도록 제한
+        if self.x < left_bound:
+            self.x = left_bound
+        elif self.x > right_bound:
+            self.x = right_bound
+
+        # 화면 위로 나가면 제거
+        if self.y < -self.WIDTH:
+            gfw.top().world.remove(self)
+
+        # 탄 발사 로직
+        self.shoot_time += gfw.frame_time
+        if self.shoot_time >= self.shoot_interval:
+            self.fire()
+            self.shoot_time = 0  # 발사 간격을 초기화
+
+    def draw(self):
+        super().draw()
+        gy = self.y - self.WIDTH // 2
+        rate = self.life / self.max_life
+        self.gauge.draw(self.x, gy, self.WIDTH - 10, rate)
+
+    def fire(self):
+        # 적의 총알을 생성
+        bullet = EnemyBullet(self.x, self.y, power=self.level)  # 레벨에 따라 power 설정
+        print(f"Fired enemy bullet at ({self.x}, {self.y}) with power {self.level}")  # 디버그 출력
+
+        # 화면에 총알을 추가
+        gfw.top().world.append(bullet, gfw.top().world.layer.bullet)  # 화면에 추가
+
+    def decrease_life(self, power):
+        self.life -= power
+        return self.life <= 0
+
+    def get_bb(self):
+        r = 42
+        return self.x - r, self.y - r, self.x + r, self.y + r
+
+    def __repr__(self):
+        return f'Enemy({self.level}/{self.life})'
+        
+class EnemyGen:
+    GEN_INTERVAL = 5.0
+    GEN_INIT = 1.0
+    GEN_X = [50, 150, 250, 350, 450]  # 고정된 X 좌표 리스트
+    GEN_Y_TOP = 800  # 화면 상단의 Y 좌표
+
+    def __init__(self):
+        self.time = self.GEN_INTERVAL - self.GEN_INIT
+        self.wave_index = 0
+
+    def draw(self):
+        pass
+
+    def update(self):
+        self.time += gfw.frame_time
+        if self.time < self.GEN_INTERVAL:
+            return
+
+        # 한 번에 생성될 적의 수를 1에서 5까지 랜덤으로 결정
+        num_enemies = random.randint(1, 5)
+
+        for i in range(num_enemies):
+            # 랜덤으로 X 좌표를 선택
+            x = random.choice(self.GEN_X)
+
+            # 적의 레벨을 계산
+            level = clamp(1, (self.wave_index + 18) // 10 - random.randrange(3), Enemy.MAX_LEVEL)
+
+            # 랜덤 Y 좌표로 적 생성
+            y = random.randint(self.GEN_Y_TOP - 100, self.GEN_Y_TOP)  # 화면 상단에서 랜덤 위치
+
+            # Enemy 객체 생성
+            enemy = Enemy(x, y, level)  # x, y, level을 전달
+            gfw.top().world.append(enemy, gfw.top().world.layer.enemy)
+
+        # 생성 주기 리셋
+        self.time -= self.GEN_INTERVAL
+        self.wave_index += 1
+
+class EnemyBullet(gfw.Sprite):
+    def __init__(self, x, y, power=10):  # power 속성 추가
+        super().__init__('res/enemy_bullet.png', x, y)  # 이미지 경로 확인
+        print(f"Bullet image loaded: {self.image is not None}")
+        self.speed = 200  # 직선으로 아래로 발사되는 속도
+        self.max_y = get_canvas_height() + self.image.h  # 화면 아래쪽을 벗어나면 삭제
+        self.layer_index = gfw.top().world.layer.bullet
+        self.power = power  # power 속성 추가
+
+    def update(self):
+        # 총알이 화면 밖으로 나갈 때까지 이동
+        self.y -= self.speed * gfw.frame_time  # y값을 감소시켜서 화면 위로 이동
+        if self.y < -self.image.h:  # 화면 위로 벗어나면 삭제
+            gfw.top().world.remove(self)
+
+    def draw(self):
+        if self.image:
+            print(f"Drawing bullet at {self.x}, {self.y}")  # 디버그 출력
+            self.image.draw(self.x, self.y)  # 총알 이미지 그리기
+        else:
+            print("No image found for bullet!")  # 이미지가 없을 경우 경고
+
+    def get_bb(self):
+        r = 15  # 탄의 충돌 범위
+        print(f"Bullet bounding box: ({self.x - r}, {self.y - r}, {self.x + r}, {self.y + r})")  # 디버그 출력
+        return self.x - r, self.y - r, self.x + r, self.y + r
