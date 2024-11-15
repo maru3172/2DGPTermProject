@@ -76,9 +76,11 @@ def push(scene):
     scene.enter()
 
 def pop():
-    _stack.pop().exit()
+    if _stack:
+        _stack.pop().exit()
     if not _stack:
         quit()
+        close_canvas()  # canvas 종료
         return
 
     scene = _stack[-1]

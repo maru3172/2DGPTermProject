@@ -94,12 +94,13 @@ class Enemy(gfw.AnimSprite):
         self.gauge.draw(self.x, gy, self.WIDTH - 10, rate)
 
     def fire(self):
-        # 적의 총알을 생성
-        bullet = EnemyBullet(self.x, self.y, power=self.level)  # 레벨에 따라 power 설정
-        print(f"Fired enemy bullet at ({self.x}, {self.y}) with power {self.level}")  # 디버그 출력
-
-        # 화면에 총알을 추가
-        gfw.top().world.append(bullet, gfw.top().world.layer.bullet)  # 화면에 추가
+        # WIDTH//2를 제거하여 적의 중심점에서 발사하도록 수정
+        bullet = EnemyBullet(self.x, self.y, power=self.level)
+        print(f"Enemy firing bullet at ({self.x}, {self.y})")
+        if bullet.image:
+            gfw.top().world.append(bullet, bullet.layer_index)
+        else:
+            print("Error: Bullet creation failed - no image!")
 
     def decrease_life(self, power):
         self.life -= power
@@ -152,28 +153,39 @@ class EnemyGen:
         self.wave_index += 1
 
 class EnemyBullet(gfw.Sprite):
-    def __init__(self, x, y, power=10):  # power 속성 추가
-        super().__init__('res/enemy_bullet.png', x, y)  # 이미지 경로 확인
-        print(f"Bullet image loaded: {self.image is not None}")
-        self.speed = 200  # 직선으로 아래로 발사되는 속도
-        self.max_y = get_canvas_height() + self.image.h  # 화면 아래쪽을 벗어나면 삭제
+    bullet_image = None
+    
+    def __init__(self, x, y, power=10):
+        if EnemyBullet.bullet_image is None:
+            EnemyBullet.bullet_image = load_image('res/enemy_bullet.png')
+            print("Loading enemy bullet image")
+        
+        self.x, self.y = x, y
+        self.image = EnemyBullet.bullet_image
+        self.speed = 200  # 음수에서 양수로 변경 (아래로 이동)
+        self.min_y = -50
+        self.power = power
         self.layer_index = gfw.top().world.layer.bullet
-        self.power = power  # power 속성 추가
-
+        self.is_removed = False
+        print(f"Bullet created at ({self.x}, {self.y})")
+        
     def update(self):
-        # 총알이 화면 밖으로 나갈 때까지 이동
-        self.y -= self.speed * gfw.frame_time  # y값을 감소시켜서 화면 위로 이동
-        if self.y < -self.image.h:  # 화면 위로 벗어나면 삭제
-            gfw.top().world.remove(self)
+        if self.is_removed:
+            return
+    
+        old_y = self.y
+        self.y -= self.speed * gfw.frame_time
+        print(f"Bullet moved from y={old_y} to y={self.y}")
 
     def draw(self):
+        if self.is_removed:
+            return
+            
         if self.image:
-            print(f"Drawing bullet at {self.x}, {self.y}")  # 디버그 출력
-            self.image.draw(self.x, self.y)  # 총알 이미지 그리기
+            self.image.draw(self.x, self.y)
         else:
-            print("No image found for bullet!")  # 이미지가 없을 경우 경고
-
+            print("Error: No bullet image loaded!")
+            
     def get_bb(self):
-        r = 15  # 탄의 충돌 범위
-        print(f"Bullet bounding box: ({self.x - r}, {self.y - r}, {self.x + r}, {self.y + r})")  # 디버그 출력
+        r = 15
         return self.x - r, self.y - r, self.x + r, self.y + r
