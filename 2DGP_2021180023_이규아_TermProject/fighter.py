@@ -119,45 +119,51 @@ class Fighter(gfw.Sprite):
         self.y = 80
 
 class Bullet(gfw.Sprite):
-    def __init__(self, x, y):
+    bullets = []  # Class-level list to track all bullets
+
+    @classmethod
+    def update_all(cls, frame_time):
+        cls.bullets = [bullet for bullet in cls.bullets if bullet.update()]
+
+    @classmethod
+    def draw_all(cls):
+        for bullet in cls.bullets:
+            bullet.draw()
+
+    def __init__(self, x, y):  # 생성자
         super().__init__('res/laser_1.png', x, y)
         self.speed = 400  # 400 pixels per second
-        self.max_y = get_canvas_height() + self.image.h
+        self.max_y = get_canvas_height() + 50
         self.power = 40
-        self.layer_index = gfw.top().world.layer.bullet
-        self.target = None  # 추적할 적 (초기에는 None으로 설정)
-        self.is_removed = False  # 삭제 여부 추적
+        self.target = None
+        self.is_removed = False
+        self.layer_index = 2  # 레이어 인덱스 추가
+        
+        # Add to class-level bullet list
+        Bullet.bullets.append(self)
 
     def get_nearest_enemy(self):
         try:
-            # gfw.top().world를 사용하여 현재 world 객체에 접근
-            enemies = [enemy for enemy in gfw.top().world.objects_of(gfw.top().world.layer.enemy) if isinstance(enemy, Enemy)]
-        
-            # 적이 없다면 바로 None을 반환
+            enemies = [
+                enemy for enemy in gfw.top().world.objects_of(gfw.top().world.layer.enemy)
+                if hasattr(enemy, 'x') and hasattr(enemy, 'y')
+            ]
+            
             if not enemies:
                 return None
-        
-            # 가장 가까운 적을 찾기
-            nearest_enemy = None
-            min_distance = float('inf')
 
-            for enemy in enemies:
-                if enemy is not None:  # None 체크 추가
-                    # 적과 현재 Bullet의 거리 계산
-                    distance = math.sqrt((enemy.x - self.x) ** 2 + (enemy.y - self.y) ** 2)
-                    if distance < min_distance:
-                        min_distance = distance
-                        nearest_enemy = enemy
-        
-            return nearest_enemy
+            return min(
+                enemies, 
+                key=lambda enemy: math.sqrt((enemy.x - self.x) ** 2 + (enemy.y - self.y) ** 2)
+            )
         except Exception as e:
-            # 예외 처리: 예외 발생 시 None 반환
             print(f"Error in get_nearest_enemy: {e}")
             return None
 
     def update(self):
+        # Return False if bullet should be removed (like PlayerBullet)
         if self.is_removed:
-            return  # 삭제된 객체는 더 이상 업데이트하지 않음
+            return False
 
         if self.target is None:
             self.target = self.get_nearest_enemy()
@@ -166,7 +172,7 @@ class Bullet(gfw.Sprite):
             dx = self.target.x - self.x
             dy = self.target.y - self.y
             distance = math.sqrt(dx ** 2 + dy ** 2)
-
+            
             if distance != 0:
                 direction_x = dx / distance
                 direction_y = dy / distance
@@ -175,14 +181,23 @@ class Bullet(gfw.Sprite):
         else:
             self.y += self.speed * gfw.frame_time
 
+        # Check if bullet is out of bounds
         if self.y > self.max_y:
-            self.remove()  # 화면 밖으로 나가면 탄을 제거
+            self.remove()
+            return False
+        
+        return True
 
     def remove(self):
-        self.is_removed = True  # 탄을 삭제된 상태로 표시
-        gfw.top().world.remove(self)  # 삭제
+        self.is_removed = True
+        if self in Bullet.bullets:
+            Bullet.bullets.remove(self)
+        gfw.top().world.remove(self)
 
     def draw(self):
-        if self.is_removed:
-            return  # 삭제된 객체는 더 이상 그리지 않음
-        super().draw()  # 그려지는 객체만 그리도록
+        if not self.is_removed:
+            super().draw()
+
+    def get_bb(self):
+        # Bounding box method from PlayerBullet
+        return self.x - 4, self.y - 4, self.x + 4, self.y + 4

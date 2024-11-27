@@ -94,11 +94,12 @@ class Enemy(gfw.AnimSprite):
         self.gauge.draw(self.x, gy, self.WIDTH - 10, rate)
 
     def fire(self):
-        # WIDTH//2를 제거하여 적의 중심점에서 발사하도록 수정
         bullet = EnemyBullet(self.x, self.y, power=self.level)
         print(f"Enemy firing bullet at ({self.x}, {self.y})")
+        world = gfw.top().world
         if bullet.image:
-            gfw.top().world.append(bullet, bullet.layer_index)
+            print(f"Adding bullet to layer {world.layer.bullet}")
+            world.append(bullet, world.layer.bullet)
         else:
             print("Error: Bullet creation failed - no image!")
 
@@ -153,39 +154,33 @@ class EnemyGen:
         self.wave_index += 1
 
 class EnemyBullet(gfw.Sprite):
-    bullet_image = None
+    bullets = []
     
+    @classmethod
+    def update_all(cls, frame_time):
+        # 화면 밖으로 나간 총알들 제거
+        cls.bullets = [bullet for bullet in cls.bullets if bullet.y >= -50]
+            
+    @classmethod
+    def draw_all(cls):
+        for bullet in cls.bullets:
+            bullet.draw()
+            
     def __init__(self, x, y, power=10):
-        if EnemyBullet.bullet_image is None:
-            EnemyBullet.bullet_image = load_image('res/enemy_bullet.png')
-            print("Loading enemy bullet image")
-        
+        self.image = load_image('res/enemy_bullet.png')
         self.x, self.y = x, y
-        self.image = EnemyBullet.bullet_image
-        self.speed = 200  # 음수에서 양수로 변경 (아래로 이동)
-        self.min_y = -50
         self.power = power
-        self.layer_index = gfw.top().world.layer.bullet
-        self.is_removed = False
-        print(f"Bullet created at ({self.x}, {self.y})")
+        self.speed = 200
+        EnemyBullet.bullets.append(self)
+        print(f"Bullet created at ({x}, {y})")
         
-    def update(self):
-        if self.is_removed:
-            return
-    
-        old_y = self.y
+    def update(self):  # 불릿 제거 여부를 불린으로 반환
         self.y -= self.speed * gfw.frame_time
-        print(f"Bullet moved from y={old_y} to y={self.y}")
-
+        # 화면 밖으로 나가면 False 반환 (제거 대상)
+        return self.y >= -50
+            
     def draw(self):
-        if self.is_removed:
-            return
-            
-        if self.image:
-            self.image.draw(self.x, self.y)
-        else:
-            print("Error: No bullet image loaded!")
-            
+        self.image.draw(self.x, self.y)
+        
     def get_bb(self):
-        r = 15
-        return self.x - r, self.y - r, self.x + r, self.y + r
+        return self.x - 8, self.y - 8, self.x + 8, self.y + 8
