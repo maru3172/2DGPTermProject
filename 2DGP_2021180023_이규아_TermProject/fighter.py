@@ -104,12 +104,12 @@ class Fighter(gfw.Sprite):
         return self.x - 30, self.y - 32, self.x + 30, self.y + 28
 
     def decrease_life(self, power):
-        """적의 탄에 맞았을 때 호출되어 플레이어 생명 감소 및 사망 처리"""
-        self.life -= power
-        if self.life <= 0:
-            self.dead = True  # 플레이어 사망
-            self.respawn_time = time.time()  # 사망 시간 기록
-            print("Player died!")
+        # 무적 상태가 아니라면 생명 감소
+        if not getattr(self, 'invincible', False):
+            self.life -= power
+            if self.life <= 0:
+                # 플레이어 사망 처리
+                game_over(score=0)
     
     def respawn(self):
         """플레이어 부활 처리"""
@@ -172,12 +172,17 @@ class Bullet(gfw.Sprite):
             dx = self.target.x - self.x
             dy = self.target.y - self.y
             distance = math.sqrt(dx ** 2 + dy ** 2)
-            
+        
             if distance != 0:
                 direction_x = dx / distance
                 direction_y = dy / distance
                 self.x += direction_x * self.speed * gfw.frame_time
                 self.y += direction_y * self.speed * gfw.frame_time
+
+                # 적과 충돌했을 때 총알 제거
+                if self.target and self.collide_with_target():
+                    self.remove()
+                    return False
         else:
             self.y += self.speed * gfw.frame_time
 
@@ -185,9 +190,33 @@ class Bullet(gfw.Sprite):
         if self.y > self.max_y:
             self.remove()
             return False
-        
+    
         return True
 
+    def collide_with_target(self):
+        if not self.target:
+            return False
+
+        b_left, b_bottom, b_right, b_top = self.get_bb()
+        e_left, e_bottom, e_right, e_top = self.target.get_bb()
+
+        if b_right < e_left or b_left > e_right:
+            return False
+        if b_top < e_bottom or b_bottom > e_top:
+            return False
+
+        # 적의 생명 감소
+        is_killed = self.target.decrease_life(self.power)
+
+        # 적이 죽으면 적 제거
+        if is_killed:
+            try:
+                gfw.top().world.remove(self.target)
+            except ValueError:
+                # 이미 제거된 경우 무시
+                pass
+
+        return True
     def remove(self):
         self.is_removed = True
         if self in Bullet.bullets:

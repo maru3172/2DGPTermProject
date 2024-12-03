@@ -1,6 +1,7 @@
 from pico2d import *
 import random
 import gfw
+import fighter
 
 def clamp(min_value, value, max_value):
     return max(min_value, min(value, max_value))
@@ -159,7 +160,7 @@ class EnemyBullet(gfw.Sprite):
     @classmethod
     def update_all(cls, frame_time):
         # 화면 밖으로 나간 총알들 제거
-        cls.bullets = [bullet for bullet in cls.bullets if bullet.y >= -50]
+        cls.bullets = [bullet for bullet in cls.bullets if bullet.update()]
             
     @classmethod
     def draw_all(cls):
@@ -167,20 +168,72 @@ class EnemyBullet(gfw.Sprite):
             bullet.draw()
             
     def __init__(self, x, y, power=10):
+        EnemyBullet.bullets.append(self)  # 탄환 리스트에 추가
         self.image = load_image('res/enemy_bullet.png')
         self.x, self.y = x, y
         self.power = power
         self.speed = 200
-        EnemyBullet.bullets.append(self)
+        self.is_removed = False
+    
+        # 이 부분을 추가
+        self.layer_index = gfw.top().world.layer.bullet
+    
         print(f"Bullet created at ({x}, {y})")
         
-    def update(self):  # 불릿 제거 여부를 불린으로 반환
+    def update(self):
+        if self.is_removed:
+            return False
+
         self.y -= self.speed * gfw.frame_time
-        # 화면 밖으로 나가면 False 반환 (제거 대상)
-        return self.y >= -50
-            
+    
+        world = gfw.top().world
+
+        fighter = None
+        for obj in world.objects_at(world.layer.fighter):
+            fighter = obj
+            break
+
+        if fighter:
+            if self.collide_with_player(fighter):
+                self.remove()
+                return False
+
+        # 화면 밖으로 나가면 제거
+        if self.y < -50:
+            self.remove()
+            return False
+
+        return True
+    def collide_with_player(self, player):
+        # player가 이미 사망 상태라면 충돌 무시
+        if getattr(player, 'dead', False):
+            return False
+
+        # 충돌 박스(바운딩 박스) 계산
+        b_left, b_bottom, b_right, b_top = self.get_bb()
+        f_left, f_bottom, f_right, f_top = player.get_bb()
+
+        # 충돌 검사
+        if b_right < f_left or b_left > f_right:
+            return False
+        if b_top < f_bottom or b_bottom > f_top:
+            return False
+
+        # 플레이어의 생명 감소
+        player.decrease_life(self.power)
+
+        return True
+
+    def remove(self):
+        self.is_removed = True
+        if self in EnemyBullet.bullets:
+            EnemyBullet.bullets.remove(self)
+        gfw.top().world.remove(self)
+
     def draw(self):
-        self.image.draw(self.x, self.y)
+        if not self.is_removed:
+            self.image.draw(self.x, self.y)
+
         
     def get_bb(self):
         return self.x - 8, self.y - 8, self.x + 8, self.y + 8
