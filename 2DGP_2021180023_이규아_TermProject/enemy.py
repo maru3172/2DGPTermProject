@@ -213,23 +213,25 @@ class EnemyBullet(gfw.Sprite):
         b_left, b_bottom, b_right, b_top = self.get_bb()
         f_left, f_bottom, f_right, f_top = player.get_bb()
 
-        # 충돌 검사
-        if b_right < f_left or b_left > f_right:
-            return False
-        if b_top < f_bottom or b_bottom > f_top:
-            return False
+        # 충돌 검사 - 바운딩 박스 교차 확인
+        if (b_right >= f_left and b_left <= f_right and 
+            b_top >= f_bottom and b_bottom <= f_top):
+        
+            # 플레이어의 생명 감소
+            player.decrease_life(self.power)
+        
+            # 총알 제거
+            self.remove()
+        
+            return True
 
-        # 플레이어의 생명 감소
-        player.decrease_life(self.power)
-
-        return True
+        return False
 
     def remove(self):
-        self.is_removed = True
-        if self in EnemyBullet.bullets:
-            EnemyBullet.bullets.remove(self)
-        gfw.top().world.remove(self)
-
+        if not self.is_removed:
+            self.is_removed = True
+            if self in gfw.top().world.objects[self.layer_index]:
+                gfw.top().world.objects[self.layer_index].remove(self)
     def draw(self):
         if not self.is_removed:
             self.image.draw(self.x, self.y)

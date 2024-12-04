@@ -203,7 +203,7 @@ class CollisionChecker:
                         except ValueError:
                             print("Enemy already removed")
                         break
-        
+
         # 적 탄환과 플레이어 충돌 체크
         for bullet in list(EnemyBullet.bullets)[:]:
             if self.check_collision(bullet, self.fighter):
@@ -211,11 +211,11 @@ class CollisionChecker:
                 if self.lives_sprite:
                     self.lives_sprite.decrease()  # 충돌 시 목숨 감소
                     print(f"목숨 감소: {self.lives_sprite.lives}")
-                
+        
                 # 적 탄 제거
                 if bullet in EnemyBullet.bullets:
                     EnemyBullet.bullets.remove(bullet)
-                
+        
                 # 게임 오버 체크
                 if self.lives_sprite.lives <= 0:
                     game_over(score=0)
@@ -226,12 +226,24 @@ class CollisionChecker:
     def check_collision(self, a, b):
         ax1, ay1, ax2, ay2 = a.get_bb()
         bx1, by1, bx2, by2 = b.get_bb()
-        
-        if ax2 < bx1: return False
-        if ax1 > bx2: return False
-        if ay2 < by1: return False
-        if ay1 > by2: return False
-        
+    
+        print(f"Object A BB: {ax1}, {ay1}, {ax2}, {ay2}")
+        print(f"Object B BB: {bx1}, {by1}, {bx2}, {by2}")
+    
+        if ax2 < bx1: 
+            print("No collision: A is left of B")
+            return False
+        if ax1 > bx2: 
+            print("No collision: A is right of B")
+            return False
+        if ay2 < by1: 
+            print("No collision: A is below B")
+            return False
+        if ay1 > by2: 
+            print("No collision: A is above B")
+            return False
+    
+        print("Collision detected!")
         return True
 
 def game_over(score):
