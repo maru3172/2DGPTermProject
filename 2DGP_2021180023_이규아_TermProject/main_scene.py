@@ -33,7 +33,12 @@ class TitleScene:
     def enter(self):
         # 기존 배경 제거 후 새로 추가
         self.world.clear()
-        self.world.append(gfw.VertFillBackground('res/Title.png', -30), self.world.layer.bg)
+        # Use VertFillBackground with 0 speed to make it static
+        self.world.append(gfw.VertFillBackground('res/Title.png', 0), self.world.layer.bg)
+        
+    def update(self):
+        # Prevent any background movement
+        pass
         
     def draw(self):
         # 배경 그리기
@@ -56,6 +61,7 @@ class TitleScene:
             t = True
             return True
         return False
+    
     def exit(self):
         pass
 
@@ -70,9 +76,11 @@ class GameOverScene:
     def enter(self):
         # 기존 배경 제거 후 새로 추가
         self.world.clear()
-        self.world.append(gfw.VertFillBackground('res/Game_Over.png', -30), self.world.layer.bg)
+        # Use VertFillBackground with 0 speed to make it static
+        self.world.append(gfw.VertFillBackground('res/Game_Over.png', 0), self.world.layer.bg)
         
     def update(self):
+        # Prevent any background movement
         self.world.update()
         
         elapsed = get_time() - self.start_time
@@ -100,6 +108,7 @@ class GameOverScene:
             current_state = GameState.PLAYING
             return True
         return False
+    
     def exit(self):
         pass
 
@@ -227,20 +236,13 @@ class CollisionChecker:
         ax1, ay1, ax2, ay2 = a.get_bb()
         bx1, by1, bx2, by2 = b.get_bb()
     
-        print(f"Object A BB: {ax1}, {ay1}, {ax2}, {ay2}")
-        print(f"Object B BB: {bx1}, {by1}, {bx2}, {by2}")
-    
         if ax2 < bx1: 
-            print("No collision: A is left of B")
             return False
         if ax1 > bx2: 
-            print("No collision: A is right of B")
             return False
         if ay2 < by1: 
-            print("No collision: A is below B")
             return False
         if ay1 > by2: 
-            print("No collision: A is above B")
             return False
     
         print("Collision detected!")

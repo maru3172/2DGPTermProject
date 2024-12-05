@@ -96,13 +96,9 @@ class Enemy(gfw.AnimSprite):
 
     def fire(self):
         bullet = EnemyBullet(self.x, self.y, power=self.level)
-        print(f"Enemy firing bullet at ({self.x}, {self.y})")
         world = gfw.top().world
         if bullet.image:
-            print(f"Adding bullet to layer {world.layer.bullet}")
             world.append(bullet, world.layer.bullet)
-        else:
-            print("Error: Bullet creation failed - no image!")
 
     def decrease_life(self, power):
         self.life -= power
@@ -177,8 +173,6 @@ class EnemyBullet(gfw.Sprite):
     
         # 이 부분을 추가
         self.layer_index = gfw.top().world.layer.bullet
-    
-        print(f"Bullet created at ({x}, {y})")
         
     def update(self):
         if self.is_removed:

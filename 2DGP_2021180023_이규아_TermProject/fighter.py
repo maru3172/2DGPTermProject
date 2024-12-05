@@ -104,13 +104,11 @@ class Fighter(gfw.Sprite):
         return self.x - 30, self.y - 32, self.x + 30, self.y + 28
 
     def decrease_life(self, power):
-        print(f"Decrease life called. Current life: {self.life}, Power: {power}")
         # 무적 상태가 아니라면 생명 감소
         if not getattr(self, 'invincible', False):
             self.life -= power
             print(f"Life after decrease: {self.life}")
             if self.life <= 0:
-                print("Life reached 0, calling game over")
                 # 현재 씬의 게임 오버 메서드 호출
                 current_scene = gfw.top()
                 if hasattr(current_scene, 'game_over'):
