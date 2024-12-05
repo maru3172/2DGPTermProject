@@ -8,7 +8,7 @@ def clamp(min_value, value, max_value):
 
 class Enemy(gfw.AnimSprite):
     WIDTH = 100
-    MAX_LEVEL = 20
+    MAX_LEVEL = 3
     gauge = None
 
     def __init__(self, x, y, level):
