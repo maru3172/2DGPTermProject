@@ -33,6 +33,10 @@ Project 2021180023
 
 주차별 커밋 수
 
+<p align="left">
+<img width="70%" alt="스크린샷 2-24-12-10" src="https://github.com/user-attachments/assets/ab7a0227-21c1-4b49-824d-30b655b98a74">
+</p>
+
 | 주 | 커밋 수|
 | --- | :-: |
 | 9/22 ~ 9/28 | 5 |
